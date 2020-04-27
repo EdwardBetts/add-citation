@@ -23,6 +23,10 @@ def exception_handler(e):
 
 @app.route('/')
 def index():
+    if 'title' in request.args:
+        title = request.args['title'].strip().replace(' ', '_')
+        if title:
+            return redirect(url_for('article_page', title=title))
     articles = [line[:-1] for line in open('data/articles')]
     return render_template('index.html', articles=articles)
 
