@@ -50,6 +50,9 @@ def article_page(title):
 
     article_props = mediawiki.get_article_props(title)
 
+    if 'missing' in article_props:
+        return render_template('missing.html', title=title), 404
+
     templates = mediawiki.get_wiki_doi_templates(title)
     citations = []
     for t in templates:
