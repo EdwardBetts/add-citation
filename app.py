@@ -8,7 +8,7 @@ app.config.from_object('config.default')
 
 @app.route('/')
 def index():
-    articles = [line[:-1] for line in open('articles')]
+    articles = [line[:-1] for line in open('data/articles')]
     return render_template('index.html', articles=articles)
 
 @app.route('/enwiki/category/<path:cat>')
