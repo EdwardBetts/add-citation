@@ -1,0 +1,25 @@
+{% macro nav_item(name, label) %}
+<li class="nav-item{% if name == active %} active{% endif %}">
+  <a class="nav-link" href="{{ url_for(name) }}">{{ label }}{% if name == active %} <span class="sr-only">(current)</span>{% endif %}</a>
+</li>
+{% endmacro %}
+
+{% macro navbar_inner(name) %}
+  <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <a class="navbar-brand" href="{{ url_for('index') }}">Add URLs to citations</a>
+
+  <div class="collapse navbar-collapse" id="navbarSupportedContent">
+    <ul class="navbar-nav mr-auto">
+    </ul>
+    <ul class="navbar-nav">
+    </ul>
+  </div>
+{% endmacro %}
+
+{% macro navbar() %}
+<nav class="navbar navbar-toggleable-md navbar-expand-lg navbar-dark bg-dark">
+  {{ navbar_inner() }}
+</nav>
+{% endmacro %}

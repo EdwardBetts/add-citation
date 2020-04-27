@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="{{ url_for('static', filename='javascript/bootstrap4/css/bootstrap.min.css') }}">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>
+    {% block title %}{% endblock %}
+  </title>
+
+  {% block style %}{% endblock %}
+</head>
+{% from "navbar.html" import navbar with context %}
+
+<body>
+  {% block nav %}{{ navbar() }}{% endblock %}
+
+  {% block content %}{% endblock %}
+
+  <script src="{{ url_for('static', filename='javascript/jquery/jquery.min.js') }}"></script>
+  {# <script src="{{ url_for('static', filename='javascript/popper.js/popper.min.js') }}"></script> #}
+  <script src="{{ url_for('static', filename='javascript/bootstrap4/js/bootstrap.min.js') }}"></script>
+
+  {% block script %}{% endblock %}
+</body>
+</html>
