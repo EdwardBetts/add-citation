@@ -26,7 +26,7 @@ def index():
     articles = [line[:-1] for line in open('data/articles')]
     return render_template('index.html', articles=articles)
 
-@app.route('/enwiki/category/<path:cat>')
+@app.route('/enwiki/Category:<path:cat>')
 def category_page(cat):
     if ' ' in cat:
         return redirect(url_for(request.endpoint, cat=cat.replace(' ', '_')))
