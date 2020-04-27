@@ -2,9 +2,24 @@
 
 from flask import Flask, render_template, redirect, url_for, request
 from citation import mediawiki, fatcat
+from citation.error_mail import setup_error_mail
+from werkzeug.exceptions import InternalServerError
+from werkzeug.debug.tbtools import get_current_traceback
+import inspect
 
 app = Flask(__name__)
 app.config.from_object('config.default')
+setup_error_mail(app)
+
+@app.errorhandler(InternalServerError)
+def exception_handler(e):
+    tb = get_current_traceback()
+    last_frame = next(frame for frame in reversed(tb.frames) if not frame.is_library)
+    last_frame_args = inspect.getargs(last_frame.code)
+    return render_template('show_error.html',
+                           tb=tb,
+                           last_frame=last_frame,
+                           last_frame_args=last_frame_args), 500
 
 @app.route('/')
 def index():
