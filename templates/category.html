@@ -11,7 +11,7 @@
 
   <ul>
   {% for m in members %}
-    {% set url = url_for('article_page', title=title.replace(' ', '_')) %}
+    {% set url = url_for('article_page', title=m.title.replace(' ', '_')) %}
     <li><a href="{{ url }}">{{ m.title }}</a></li>
   {% endfor %}
   </ul>
