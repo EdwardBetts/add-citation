@@ -5,6 +5,8 @@
 
   <h2>Articles</h2>
 
+  <p>This service is new and unfinished, the article pages might take a few seconds to load.</p>
+
   <ul>
     {% for title in articles %}
       <li><a href="{{ url_for('article_page', title=title.replace(' ', '_')) }}">{{ title }}</li>
