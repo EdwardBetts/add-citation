@@ -25,7 +25,7 @@
         {% else %}
           <li class="nav-item">
             {% set login_url = url_for('start_oauth', next=request.script_root + request.full_path) %}
-            <a class="nav-link" href="{{ login_url }}">connect with Wikidata</a>
+            <a class="nav-link" href="{{ login_url }}">connect with Wikipedia</a>
           </li>
         {% endif %}
     </ul>
