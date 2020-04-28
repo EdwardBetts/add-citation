@@ -98,7 +98,7 @@ def start_oauth():
     session['owner_key'] = fetch_response.get('oauth_token')
     session['owner_secret'] = fetch_response.get('oauth_token_secret')
 
-    base_authorization_url = 'https://www.wikidata.org/wiki/Special:OAuth/authorize'
+    base_authorization_url = 'https://en.wikipedia.org/wiki/Special:OAuth/authorize'
     authorization_url = oauth.authorization_url(base_authorization_url,
                                                 oauth_consumer_key=client_key)
     return redirect(authorization_url)
