@@ -135,7 +135,7 @@ def oauth_disconnect():
     for key in 'owner_key', 'owner_secret', 'username', 'after_login':
         if key in session:
             del session[key]
-    return redirect(url_for('browse_page'))
+    return redirect(url_for('index'))
 
 
 if __name__ == '__main__':
