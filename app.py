@@ -87,7 +87,7 @@ def start_oauth():
 
     client_key = app.config['CLIENT_KEY']
     client_secret = app.config['CLIENT_SECRET']
-    base_url = 'https://www.wikidata.org/w/index.php'
+    base_url = 'https://en.wikipedia.org/w/api.php'
     request_token_url = base_url + '?title=Special%3aOAuth%2finitiate'
 
     oauth = OAuth1Session(client_key,
@@ -105,7 +105,7 @@ def start_oauth():
 
 @app.route("/oauth/callback", methods=["GET"])
 def oauth_callback():
-    base_url = 'https://www.wikidata.org/w/index.php'
+    base_url = 'https://en.wikipedia.org/w/api.php'
     client_key = app.config['CLIENT_KEY']
     client_secret = app.config['CLIENT_SECRET']
 

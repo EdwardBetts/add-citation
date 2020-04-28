@@ -11,7 +11,7 @@ def get_edit_proxy():
 
 def api_post_request(params):
     app = current_app
-    url = 'https://www.wikidata.org/w/api.php'
+    url = 'https://en.wikipedia.org/w/api.php'
     client_key = app.config['CLIENT_KEY']
     client_secret = app.config['CLIENT_SECRET']
     oauth = OAuth1Session(client_key,
@@ -23,7 +23,7 @@ def api_post_request(params):
 
 def raw_request(params):
     app = current_app
-    url = 'https://www.wikidata.org/w/api.php?' + urlencode(params)
+    url = 'https://en.wikipedia.org/w/api.php?' + urlencode(params)
     client_key = app.config['CLIENT_KEY']
     client_secret = app.config['CLIENT_SECRET']
     oauth = OAuth1Session(client_key,
