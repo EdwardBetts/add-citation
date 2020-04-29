@@ -1,16 +1,30 @@
 #!/usr/bin/python3
 
-from flask import Flask, render_template, redirect, url_for, request, session, g
+from flask import Flask, render_template, redirect, url_for, request, session, g, jsonify
 from citation import mediawiki, fatcat, mediawiki_oauth
 from citation.error_mail import setup_error_mail
 from werkzeug.exceptions import InternalServerError
 from werkzeug.debug.tbtools import get_current_traceback
 from requests_oauthlib import OAuth1Session
+from collections import defaultdict
 import inspect
 
 app = Flask(__name__)
 app.config.from_object('config.default')
 setup_error_mail(app)
+
+def get_url_pair(src):
+    by_rel = defaultdict(list)
+    for i in src:
+        by_rel[i['rel']].append(i['url'])
+
+    if len(src) == 2 and len(by_rel['webarchive']) == 1:
+        other_key = next(key for key in by_rel.keys() if key != 'webarchive')
+        return {'web': by_rel[other_key][0], 'archive': by_rel['webarchive'][0]}
+
+def pick_urls(src):
+    chosen = get_url_pair(src)
+    return set(chosen.values()) if chosen else set()
 
 @app.errorhandler(InternalServerError)
 def exception_handler(e):
@@ -46,11 +60,25 @@ def category_page(cat):
                            title=cat,
                            members=members)
 
-@app.route('/enwiki/<path:title>')
+def build_citation_dict(t):
+    doi = t.get('doi').value.strip()
+    cite_title = t.get('title').value.strip()
+    item = fatcat.lookup_doi(doi)
+    return {
+        'title': cite_title,
+        'doi': doi,
+        'template': t,
+        'item': item,
+        'urls': fatcat.get_urls_from_fatcat(item),
+    }
+
+@app.route('/enwiki/<path:title>', methods=['GET', 'POST'])
 def article_page(title):
+    if request.method == 'POST':
+        return save_article(title)
+
     if ' ' in title:
         return redirect(url_for(request.endpoint, title=title.replace(' ', '_')))
-
     title = title.replace('_', ' ')
 
     article_props = mediawiki.get_article_props(title)
@@ -58,26 +86,93 @@ def article_page(title):
     if 'missing' in article_props:
         return render_template('missing.html', title=title), 404
 
-    templates = mediawiki.get_wiki_doi_templates(title)
-    citations = []
-    for t in templates:
-        doi = t.get('doi').value.strip()
-        cite_title = t.get('title').value.strip()
-        item = fatcat.lookup_doi(doi)
-        ret = {
-            'title': cite_title,
-            'doi': doi,
-            'template': t,
-            'item': item,
-            'urls': fatcat.get_urls_from_fatcat(item),
-        }
-        citations.append(ret)
+    wikicode = mediawiki.get_wikicode(title)
+    templates = mediawiki.templates_with_doi(wikicode) if wikicode else []
+    citations = [build_citation_dict(t) for t in templates]
 
     return render_template('article.html',
                            title=title,
                            extract=article_props['extract'],
                            cats=article_props['categories'],
+                           pick_urls=pick_urls,
                            citations=citations)
+
+def date_from_web_archive_url(archive_url):
+    web_archive_start = 'https://web.archive.org/web/'
+    offset = len(web_archive_start)
+
+    assert archive_url.startswith(web_archive_start)
+    archive_date_str = archive_url[offset:offset + 8]
+    assert archive_date_str.isdigit()
+    year = archive_date_str[:4]
+    month = archive_date_str[4:6]
+    day = archive_date_str[6:8]
+    archive_date = f'{year}-{month}-{day}'
+
+    return archive_date
+
+def preview_save(title):
+    title = title.replace('_', ' ')
+    wikicode = mediawiki.get_wikicode(title)
+    assert wikicode
+    templates = mediawiki.templates_with_doi(wikicode)
+    citations = [build_citation_dict(t) for t in templates]
+    citations = [cite for cite in citations if cite['urls']]
+
+def nbsp_at_start(line):
+    ''' Protect spaces at the start of a string. '''
+    space_count = 0
+    for c in line:
+        if c != ' ':
+            break
+        space_count += 1
+    # return Markup('&nbsp;') * space_count + line[space_count:]
+    return '\u00A0' * space_count + line[space_count:]
+
+
+def save_article(title):
+    title = title.replace('_', ' ')
+    wikicode = mediawiki.get_wikicode(title)
+    assert wikicode
+    update_wikicode(wikicode)
+
+    return render_template('preview.html',
+                           title=title,
+                           wikitext=str(wikicode),
+                           nbsp_at_start=nbsp_at_start)
+    # return str(wikicode), 200, {'Content-Type': 'text/plain'}
+
+def update_wikicode(wikicode):
+    templates = mediawiki.templates_with_doi(wikicode)
+    citations = [build_citation_dict(t) for t in templates]
+    citations = [cite for cite in citations if cite['urls']]
+
+    max_cite_params = max(int(key[5:]) for key in request.form
+                          if key.startswith('cite_'))
+
+    assert max_cite_params == len(citations)
+    assert all(request.form[f'doi_{num}'] == cite['doi']
+               for num, cite in enumerate(citations, start=1))
+
+    for num, cite in enumerate(citations, start=1):
+        file_choice = int(request.form[f'cite_{num}'])
+        if file_choice == 0:
+            continue
+
+        t = cite['template']
+        files = [f for f in cite['item']['files'] if f.get('urls')]
+        f = files[file_choice - 1]
+        assert f['urls']
+        url_pair = get_url_pair(f['urls'])
+        assert url_pair
+
+        archive_date = date_from_web_archive_url(url_pair['archive'])
+        t.add('url', url_pair['web'])
+        t.add('format', 'PDF')
+        t.add('archive-url', url_pair['archive'])
+        t.add('archive-date', archive_date)
+
+    return wikicode
 
 @app.route('/oauth/start')
 def start_oauth():

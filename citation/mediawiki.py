@@ -45,12 +45,21 @@ def get_category_members(title):
     }
     return run_query(params)['categorymembers']
 
-def get_wiki_doi_templates(title):
+def get_wikicode(title):
     params = {'prop': 'revisions', 'rvprop': 'content', 'titles': title}
     page = run_query(params)['pages'][0]
     assert title == page['title']
     if 'revisions' not in page:
-        return []
-    content = page['revisions'][0]['content']
-    wikicode = mwparserfromhell.parse(content)
+        return
+
+    return mwparserfromhell.parse(page['revisions'][0]['content'])
+
+def templates_with_doi(wikicode):
     return [t for t in wikicode.filter_templates() if t.has('doi')]
+
+def get_wiki_doi_templates(title):
+    wikicode = get_wikicode(title)
+    if wikicode:
+        return [t for t in wikicode.filter_templates() if t.has('doi')]
+    else:
+        return []
